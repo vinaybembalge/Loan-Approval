@@ -1,0 +1,267 @@
+pip install numpy pandas scikit-learn
+
+# Importing necessary libraries
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report
+
+# Load the dataset (replace 'loan_data.csv' with your dataset)
+df = pd.read_csv('loan_data.csv')
+
+# Understanding the dataset
+print(df.head())
+print(df.info())
+
+# Preprocessing
+# Handling missing values with SimpleImputer
+imputer = SimpleImputer(strategy='median')
+df_imputed = pd.DataFrame(imputer.fit_transform(df), columns=df.columns)
+
+# Outlier detection and removal (example with Z-score method)
+from scipy.stats import zscore
+df_no_outliers = df_imputed[(np.abs(zscore(df_imputed)) < 3).all(axis=1)]
+
+# Feature Scaling
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(df_no_outliers.drop('Loan_Status', axis=1))
+df_scaled = pd.DataFrame(scaled_features, columns=df_no_outliers.columns[:-1])
+
+# Splitting the dataset into training and testing sets
+X = df_scaled
+y = df_no_outliers['Loan_Status']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Model 1: Logistic Regression
+log_reg = LogisticRegression(random_state=42)
+log_reg.fit(X_train, y_train)
+y_pred_log_reg = log_reg.predict(X_test)
+
+# Model 2: Random Forest Classifier
+rf = RandomForestClassifier(random_state=42)
+# Hyperparameter tuning using GridSearchCV (optional)
+param_grid = {
+    'n_estimators': [100, 200],
+    'max_depth': [10, 20],
+    'min_samples_split': [2, 5]
+}
+grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, scoring='accuracy')
+grid_search.fit(X_train, y_train)
+best_rf = grid_search.best_estimator_
+
+y_pred_rf = best_rf.predict(X_test)
+
+# Evaluation
+print("Logistic Regression Accuracy:", accuracy_score(y_test, y_pred_log_reg))
+print("Random Forest Accuracy:", accuracy_score(y_test, y_pred_rf))
+print("\nClassification Report for Random Forest:\n", classification_report(y_test, y_pred_rf))
+
+# Combined model accuracy
+accuracy = max(accuracy_score(y_test, y_pred_log_reg), accuracy_score(y_test, y_pred_rf))
+print(f'Final Model Accuracy: {accuracy * 100:.2f}%')
+
+pip install pandas numpy scikit-learn matplotlib seaborn
+
+# Importing necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Machine Learning libraries
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# Suppress warnings for clean output
+import warnings
+warnings.filterwarnings('ignore')
+
+# Load the dataset
+# You can download the dataset from: https://datahack.analyticsvidhya.com/contest/practice-problem-loan-prediction-iii/
+# For the purpose of this example, we'll assume the dataset is named 'loan_data.csv'
+
+# Read the data
+data = pd.read_csv('loan_data.csv')
+
+# Load the dataset
+# You can download the dataset from: https://datahack.analyticsvidhya.com/contest/practice-problem-loan-prediction-iii/
+# For the purpose of this example, we'll assume the dataset is named 'loan_data.csv'
+
+# Read the data
+data = pd.read_csv('loan_data.csv')
+
+# Explore the data
+print("First five rows of the dataset:")
+print(data.head())
+
+print("\nSummary of the dataset:")
+print(data.info())
+
+print("\nStatistical summary of numerical features:")
+print(data.describe())
+
+# Check for missing values
+print("\nMissing values in each column:")
+print(data.isnull().sum())
+
+# Impute missing values
+
+# For categorical variables, we'll use the most frequent value
+categorical_cols = ['Gender', 'Married', 'Dependents', 'Self_Employed', 'Loan_Amount_Term', 'Credit_History']
+for col in categorical_cols:
+    imputer = SimpleImputer(strategy='most_frequent')
+    data[col] = imputer.fit_transform(data[[col]])
+
+# For numerical variables, we'll use the mean
+numerical_cols = ['LoanAmount']
+for col in numerical_cols:
+    imputer = SimpleImputer(strategy='mean')
+    data[col] = imputer.fit_transform(data[[col]])
+
+# Verify missing values are imputed
+print("\nMissing values after imputation:")
+print(data.isnull().sum())
+
+# Outlier detection and removal using IQR method for 'LoanAmount'
+
+Q1 = data['LoanAmount'].quantile(0.25)
+Q3 = data['LoanAmount'].quantile(0.75)
+IQR = Q3 - Q1
+
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+# Removing outliers
+data = data[(data['LoanAmount'] >= lower_bound) & (data['LoanAmount'] <= upper_bound)]
+
+print("\nShape of data after removing outliers:")
+print(data.shape)
+
+# Convert categorical variables to numerical using Label Encoding
+le = LabelEncoder()
+categorical_cols = ['Gender', 'Married', 'Education', 'Self_Employed', 'Property_Area', 'Dependents', 'Loan_Status']
+
+for col in categorical_cols:
+    data[col] = le.fit_transform(data[col])
+
+print("\nData types after label encoding:")
+print(data.dtypes)
+
+# Feature Scaling
+scaler = StandardScaler()
+numerical_cols = ['ApplicantIncome', 'CoapplicantIncome', 'LoanAmount', 'Loan_Amount_Term']
+
+data[numerical_cols] = scaler.fit_transform(data[numerical_cols])
+
+print("\nFirst five rows after scaling numerical features:")
+print(data.head())
+# Splitting the data into features and target variable
+X = data.drop(['Loan_ID', 'Loan_Status'], axis=1)
+y = data['Loan_Status']
+
+# Splitting into training and testing datasets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+print("\nShape of training features:", X_train.shape)
+print("Shape of testing features:", X_test.shape)
+
+# Logistic Regression Model
+
+# Initialize the model
+log_reg = LogisticRegression()
+
+# Define parameters for Grid Search
+param_grid = {
+    'C': [0.01, 0.1, 1, 10],
+    'solver': ['liblinear', 'lbfgs']
+}
+
+# Grid Search for best parameters
+grid_search = GridSearchCV(log_reg, param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_train, y_train)
+
+# Best parameters and estimator
+print("\nBest parameters for Logistic Regression:", grid_search.best_params_)
+best_log_reg = grid_search.best_estimator_
+
+# Predictions
+y_pred_log_reg = best_log_reg.predict(X_test)
+
+# Evaluation
+print("\nLogistic Regression Model Accuracy:", accuracy_score(y_test, y_pred_log_reg))
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred_log_reg))
+# Random Forest Classifier
+
+# Initialize the model
+rf_clf = RandomForestClassifier(random_state=42)
+
+# Define parameters for Grid Search
+param_grid = {
+    'n_estimators': [50, 100, 150],
+    'max_depth': [None, 10, 20, 30],
+    'min_samples_split': [2, 5, 10]
+}
+
+# Grid Search for best parameters
+grid_search_rf = GridSearchCV(rf_clf, param_grid, cv=5, scoring='accuracy')
+grid_search_rf.fit(X_train, y_train)
+
+# Best parameters and estimator
+print("\nBest parameters for Random Forest:", grid_search_rf.best_params_)
+best_rf_clf = grid_search_rf.best_estimator_
+
+# Predictions
+y_pred_rf = best_rf_clf.predict(X_test)
+
+# Evaluation
+print("\nRandom Forest Model Accuracy:", accuracy_score(y_test, y_pred_rf))
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred_rf))
+
+# Confusion Matrix for both models
+
+# Logistic Regression Confusion Matrix
+cm_log_reg = confusion_matrix(y_test, y_pred_log_reg)
+sns.heatmap(cm_log_reg, annot=True, fmt='d')
+plt.title('Logistic Regression Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
+
+# Random Forest Confusion Matrix
+cm_rf = confusion_matrix(y_test, y_pred_rf)
+sns.heatmap(cm_rf, annot=True, fmt='d')
+plt.title('Random Forest Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
+
+# Conclusion
+
+print("Logistic Regression Accuracy: {:.2f}%".format(accuracy_score(y_test, y_pred_log_reg)*100))
+print("Random Forest Accuracy: {:.2f}%".format(accuracy_score(y_test, y_pred_rf)*100))
+
+if accuracy_score(y_test, y_pred_log_reg) > accuracy_score(y_test, y_pred_rf):
+    print("\nLogistic Regression performs better.")
+else:
+    print("\nRandom Forest performs better.")
+
+# Conclusion
+
+print("Logistic Regression Accuracy: {:.2f}%".format(accuracy_score(y_test, y_pred_log_reg)*100))
+print("Random Forest Accuracy: {:.2f}%".format(accuracy_score(y_test, y_pred_rf)*100))
+
+if accuracy_score(y_test, y_pred_log_reg) > accuracy_score(y_test, y_pred_rf):
+    print("\nLogistic Regression performs better.")
+else:
+    print("\nRandom Forest performs better.")
+
